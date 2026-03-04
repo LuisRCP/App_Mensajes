@@ -1,25 +1,51 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Chat</title>
+<meta charset="UTF-8">
+<title>Messenger MVC</title>
+
+<link rel="stylesheet" href="/css/chat.css">
+
 </head>
+
 <body>
 
-<h2>Messenger MVC</h2>
+<div class="container">
 
-<p>Usuario ID: <?= esc($usuarioId) ?></p>
+    <!-- SIDEBAR -->
+    <div class="sidebar">
 
-<a href="/logout">Cerrar sesión</a>
+        <div class="sidebar-header">
+            <h2>Chats</h2>
+        </div>
 
-<hr>
+        <div class="search-box">
+            <input placeholder="Buscar chat...">
+        </div>
 
-<div id="messages"
-     style="height:300px;overflow:auto;border:1px solid black"></div>
+        <div id="usuarios" class="chat-list"></div>
 
-<br>
+    </div>
 
-<input id="mensaje" placeholder="Escribe mensaje">
-<button onclick="enviar()">Enviar</button>
+
+    <!-- CHAT AREA -->
+    <div class="chat-area">
+
+        <div class="chat-header">
+            <span id="chatUser">Selecciona un usuario</span>
+            <a href="/logout">Cerrar sesión</a>
+        </div>
+
+        <div id="messages" class="messages"></div>
+
+        <div class="chat-input">
+            <input id="mensaje" placeholder="Escribe un mensaje">
+            <button onclick="enviar()">Enviar</button>
+        </div>
+
+    </div>
+
+</div>
 
 <script>
 const usuarioId = <?= $usuarioId ?>;

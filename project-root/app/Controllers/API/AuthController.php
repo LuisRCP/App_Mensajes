@@ -147,4 +147,19 @@ class AuthController extends BaseController
             'success' => true
         ]);
     }
+
+    public function usuarios()
+    {
+        $userId = session()->get('usuarioId');
+
+        $usuarios = $this->usuarioModel
+            ->select('usuario.usuarioId, persona.persona_Nombre, persona.persona_ApellidoPaterno')
+            ->join('persona', 'persona.personaId = usuario.personaId')
+            ->where('usuario.usuarioId !=', $userId)
+            ->findAll();
+
+        return $this->response->setJSON([
+            'usuarios' => $usuarios
+        ]);
+    }
 }

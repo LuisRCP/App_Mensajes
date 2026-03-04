@@ -69,4 +69,78 @@ class ChatController extends BaseController
             'success' => true
         ]);
     }
+
+    public function conversation($receptorId)
+    {
+        $userId = session()->get('usuarioId');
+
+        // ordenar usuarios igual que en send()
+        $u1 = min($userId, $receptorId);
+        $u2 = max($userId, $receptorId);
+
+        // buscar conversación
+        $conv = $this->convModel
+            ->where('usuario1_id', $u1)
+            ->where('usuario2_id', $u2)
+            ->first();
+
+        if(!$conv){
+            return $this->response->setJSON([
+                'mensajes'=>[]
+            ]);
+        }
+
+        $mensajes = $this->msgModel
+            ->where('conversacionId', $conv['conversacionId'])
+            ->orderBy('fecha_enviado','ASC')
+            ->findAll();
+
+        // descifrar mensajes
+        foreach($mensajes as &$m){
+            $m['mensaje_contenido'] = decryptMessage($m['mensaje_contenido']);
+        }
+
+        return $this->response->setJSON([
+            'mensajes'=>$mensajes
+        ]);
+    }
+
+    public function conversaciones()
+    {
+        $userId = session()->get('usuarioId');
+
+        $db = \Config\Database::connect();
+
+        $query = $db->query("
+            SELECT 
+                c.conversacionId,
+                u.usuarioId,
+                p.persona_Nombre,
+                p.persona_ApellidoPaterno,
+                m.mensaje_contenido,
+                m.fecha_enviado
+            FROM conversacion c
+            JOIN usuario u 
+                ON (u.usuarioId = IF(c.usuario1_id = ?, c.usuario2_id, c.usuario1_id))
+            JOIN persona p 
+                ON p.personaId = u.personaId
+            LEFT JOIN mensaje m 
+                ON m.mensajeId = c.ultimo_mensaje_id
+            WHERE c.usuario1_id = ? OR c.usuario2_id = ?
+            ORDER BY c.actualizado_en DESC
+        ", [$userId, $userId, $userId]);
+
+        $rows = $query->getResultArray();
+
+        // descifrar último mensaje
+        foreach ($rows as &$r) {
+            if ($r['mensaje_contenido']) {
+                $r['mensaje_contenido'] = decryptMessage($r['mensaje_contenido']);
+            }
+        }
+
+        return $this->response->setJSON([
+            'conversaciones' => $rows
+        ]);
+    }
 }

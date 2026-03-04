@@ -18,6 +18,12 @@ $routes->group('api', ['filter'=>'auth'], function($routes){
 
     $routes->post('chat/send', 'API\ChatController::send');
 
+    $routes->get('chat/conversation/(:num)', 'API\ChatController::conversation/$1');
+
+    $routes->get('usuarios', 'API\AuthController::usuarios');
+    
+    $routes->get('chat/conversaciones', 'API\ChatController::conversaciones');
+
 });
 
 // páginas MVC
