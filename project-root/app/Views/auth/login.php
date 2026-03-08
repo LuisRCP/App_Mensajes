@@ -1,125 +1,68 @@
 <!DOCTYPE html>
 <html>
 <head>
+
 <meta charset="UTF-8">
 <title>Messenger - Login</title>
 
-<style>
+<link rel="stylesheet" href="/css/login.css">
 
-body{
-    margin:0;
-    font-family:Arial;
-    background:#0b141a;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    height:100vh;
-    color:white;
-}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 
-.container{
-    background:#111b21;
-    padding:40px;
-    border-radius:10px;
-    width:320px;
-}
-
-h2{
-    text-align:center;
-}
-
-input{
-    width:100%;
-    padding:10px;
-    margin-top:10px;
-    border:none;
-    border-radius:5px;
-    background:#202c33;
-    color:white;
-}
-
-button{
-    width:100%;
-    padding:10px;
-    margin-top:15px;
-    border:none;
-    border-radius:5px;
-    background:#00a884;
-    color:white;
-    cursor:pointer;
-}
-
-.switch{
-    text-align:center;
-    margin-top:10px;
-    cursor:pointer;
-    color:#00a884;
-}
-
-.hidden{
-    display:none;
-}
-
-</style>
 </head>
 
 <body>
 
-<div class="container">
+<canvas id="particles"></canvas>
 
-    <h2>Messenger</h2>
+<div class="container" id="container">
 
-    <!-- LOGIN -->
-    <div id="loginBox">
+<h2>Messenger</h2>
 
-        <input id="correo" placeholder="Correo">
-        <input id="password" type="password" placeholder="Contraseña">
+<!-- LOGIN -->
 
-        <button onclick="login()">Entrar</button>
+<div id="loginBox">
 
-        <div class="switch" onclick="mostrarRegistro()">
-            Crear cuenta
-        </div>
+<input id="correo" placeholder="Correo">
+<input id="password" type="password" placeholder="Contraseña">
 
-    </div>
+<button onclick="login()">Entrar</button>
+
+<div id="msg" class="msg"></div>
 
 
-    <!-- REGISTRO -->
-    <div id="registroBox" class="hidden">
+<div class="switch" onclick="mostrarRegistro()">
+Crear cuenta
+</div>
 
-        <input id="nombre" placeholder="Nombre">
-        <input id="apellido_paterno" placeholder="Apellido paterno">
-        <input id="apellido_materno" placeholder="Apellido materno">
-        <input id="correo_reg" placeholder="Correo">
+</div>
 
-        <button onclick="registrar()">Registrarse</button>
 
-        <div class="switch" onclick="mostrarLogin()">
-            Ya tengo cuenta
-        </div>
+<!-- REGISTRO -->
 
-    </div>
+<div id="registroBox" class="hidden">
 
-    <p id="msg"></p>
+<input id="nombre" placeholder="Nombre">
+<input id="apellido_paterno" placeholder="Apellido paterno">
+<input id="apellido_materno" placeholder="Apellido materno">
+<input id="correo_reg" placeholder="Correo">
+
+<button onclick="registrar()">Registrarse</button>
+
+<div id="msg" class="msg"></div>
+
+
+<div class="switch" onclick="mostrarLogin()">
+Ya tengo cuenta
+</div>
+
+</div>
 
 </div>
 
 <script src="/js/api.js"></script>
 <script src="/js/login.js"></script>
-
-<script>
-
-function mostrarRegistro(){
-    document.getElementById("loginBox").classList.add("hidden");
-    document.getElementById("registroBox").classList.remove("hidden");
-}
-
-function mostrarLogin(){
-    document.getElementById("registroBox").classList.add("hidden");
-    document.getElementById("loginBox").classList.remove("hidden");
-}
-
-</script>
+<script src="/js/login-ui.js"></script>
 
 </body>
 </html>

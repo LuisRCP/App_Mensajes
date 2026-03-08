@@ -24,6 +24,8 @@ $routes->group('api', ['filter'=>'auth'], function($routes){
     
     $routes->get('chat/conversaciones', 'API\ChatController::conversaciones');
 
+    $routes->post('chat/send-image', 'API\ChatController::sendImage');
+
 });
 
 // páginas MVC
