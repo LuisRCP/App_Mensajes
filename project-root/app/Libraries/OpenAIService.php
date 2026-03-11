@@ -17,10 +17,18 @@ class OpenAIService
             "model" => "gpt-4.1-mini",
             "messages" => [
                 [
+                    "role" => "system",
+                    "content" => "Eres un asistente dentro de un chat tipo messenger. 
+                    Responde breve, claro y natural.
+                    Usa máximo 6 o 7  oraciones.
+                    Evita textos largos o explicaciones académicas."
+                ],
+                [
                     "role" => "user",
                     "content" => $mensaje
                 ]
             ]
+            
         ];
 
         $ch = curl_init("https://api.openai.com/v1/chat/completions");

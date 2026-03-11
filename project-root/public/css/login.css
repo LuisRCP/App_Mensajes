@@ -1,227 +1,205 @@
-*{
-box-sizing:border-box;
-margin:0;
-padding:0;
-font-family:Arial;
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: Arial;
 }
 
-body{
-height:100vh;
-display:flex;
-justify-content:center;
-align-items:center;
-background:#0b141a;
-overflow:hidden;
-position:relative;
+body {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #0b141a;
+  overflow: hidden;
+  position: relative;
 }
 
 /* PARTICULAS */
 
-canvas{
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-z-index:0;
+canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
 }
 
 /* CONTENEDOR */
 
-.container{
+.container {
+  width: 420px;
+  max-width: 92%;
 
-width:420px;
-max-width:92%;
+  padding: 40px;
 
-padding:40px;
+  background: #111b21;
 
-background:#111b21;
+  border-radius: 16px;
 
-border-radius:16px;
+  box-shadow:
+    0 25px 50px rgba(0, 0, 0, 0.7),
+    0 0 30px rgba(0, 168, 132, 0.15);
 
-box-shadow:
-0 25px 50px rgba(0,0,0,0.7),
-0 0 30px rgba(0,168,132,0.15);
+  color: white;
 
-color:white;
+  display: flex;
+  flex-direction: column;
 
-display:flex;
-flex-direction:column;
+  gap: 38px;
 
-gap:38px;
-
-z-index:2;
+  z-index: 2;
 }
-input{
-height:48px;
+input {
+  height: 48px;
 }
-button{
-height:48px;
+button {
+  height: 48px;
 }
 /* TITULO */
 
-h2{
-text-align:center;
-font-size:22px;
-font-weight:600;
-margin-bottom:5px;
+h2 {
+  text-align: center;
+  font-size: 22px;
+  font-weight: 600;
+  margin-bottom: 5px;
 }
 
 /* INPUTS */
 
-input{
+input {
+  width: 100%;
 
-width:100%;
+  padding: 16px;
 
-padding:16px;
+  border: none;
+  border-radius: 10px;
 
-border:none;
-border-radius:10px;
+  background: #202c33;
+  color: white;
 
-background:#202c33;
-color:white;
+  outline: none;
 
-outline:none;
+  font-size: 15px;
 
-font-size:15px;
-
-transition:.25s;
+  transition: 0.25s;
 }
 
-input::placeholder{
-color:#8696a0;
+input::placeholder {
+  color: #8696a0;
 }
 
-input:focus{
-box-shadow:0 0 10px rgba(0,168,132,0.6);
+input:focus {
+  box-shadow: 0 0 10px rgba(0, 168, 132, 0.6);
 }
 
 /* BOTON */
 
-button{
+button {
+  width: 100%;
 
-width:100%;
+  padding: 16px;
 
-padding:16px;
+  border: none;
+  border-radius: 10px;
 
-border:none;
-border-radius:10px;
+  background: #00a884;
 
-background:#00a884;
+  color: white;
 
-color:white;
+  font-weight: bold;
 
-font-weight:bold;
+  font-size: 15px;
 
-font-size:15px;
+  cursor: pointer;
 
-cursor:pointer;
-
-transition:.25s;
+  transition: 0.25s;
 }
 
-button:hover{
-transform:scale(1.03);
-background:#02c39a;
+button:hover {
+  transform: scale(1.03);
+  background: #02c39a;
 }
 
 /* SWITCH */
 
-.switch{
+.switch {
+  text-align: center;
 
-text-align:center;
+  cursor: pointer;
 
-cursor:pointer;
+  color: #00e1b2;
 
-color:#00e1b2;
+  font-size: 15px;
 
-font-size:15px;
-
-margin-top:5px;
+  margin-top: 5px;
 }
 
-.switch:hover{
-text-decoration:underline;
+.switch:hover {
+  text-decoration: underline;
 }
 
-.hidden{
-display:none;
+.hidden {
+  display: none;
 }
 
-.msg{
-margin-top:10px;
-color:#ff6b6b;
-font-size:14px;
-text-align:center;
+.msg {
+  margin-top: 10px;
+  color: #ff6b6b;
+  font-size: 14px;
+  text-align: center;
 }
 
 /* ================= */
 /* RESPONSIVE */
 /* ================= */
 
-@media (max-width:600px){
+@media (max-width: 600px) {
+  .container {
+    width: 95%;
 
-.container{
+    padding: 30px;
 
-width:95%;
+    gap: 16px;
+  }
 
-padding:30px;
+  h2 {
+    font-size: 20px;
+  }
 
-gap:16px;
+  input {
+    padding: 15px;
+    font-size: 14px;
+  }
 
-}
-
-h2{
-font-size:20px;
-}
-
-input{
-
-padding:15px;
-font-size:14px;
-
-}
-
-button{
-
-padding:15px;
-font-size:14px;
-
-}
-
+  button {
+    padding: 15px;
+    font-size: 14px;
+  }
 }
 
 /* teléfonos pequeños */
 
-@media (max-width:400px){
+@media (max-width: 400px) {
+  .container {
+    padding: 25px;
+  }
 
-.container{
+  input {
+    padding: 14px;
+  }
 
-padding:25px;
-
-}
-
-input{
-
-padding:14px;
-
-}
-
-button{
-
-padding:14px;
-
-}
-
+  button {
+    padding: 14px;
+  }
 }
 
 /* pantallas bajas */
 
-@media (max-height:600px){
-
-body{
-align-items:flex-start;
-padding-top:60px;
-}
-
+@media (max-height: 600px) {
+  body {
+    align-items: flex-start;
+    padding-top: 60px;
+  }
 }
