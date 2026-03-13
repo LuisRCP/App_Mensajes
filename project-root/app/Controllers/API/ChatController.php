@@ -5,11 +5,13 @@ namespace App\Controllers\API;
 use App\Controllers\BaseController;
 use App\Models\ConversacionModel;
 use App\Models\MensajeModel;
+use App\Models\ArchivoModel;
 
 class ChatController extends BaseController
 {
     protected $convModel;
     protected $msgModel;
+    protected $archivoModel;
 
     public function __construct()
     {
@@ -17,7 +19,9 @@ class ChatController extends BaseController
 
         $this->convModel = new ConversacionModel();
         $this->msgModel  = new MensajeModel();
+        $this->archivoModel = new ArchivoModel();
     }
+
 
     public function send()
     {
@@ -28,42 +32,18 @@ class ChatController extends BaseController
         $receptorId = $data['receptor_id'];
         $mensajePlano = $data['mensaje'];
 
-        // ordenar usuarios (evita duplicados)
-        $u1 = min($userId, $receptorId);
-        $u2 = max($userId, $receptorId);
+        $convId = $this->convModel->obtenerOCrearConversacion($userId, $receptorId);
 
-        // buscar conversación
-        $conv = $this->convModel
-            ->where('usuario1_id', $u1)
-            ->where('usuario2_id', $u2)
-            ->first();
-
-        if (!$conv) {
-            $convId = $this->convModel->insert([
-                'usuario1_id' => $u1,
-                'usuario2_id' => $u2,
-                'actualizado_en' => date('Y-m-d H:i:s')
-            ]);
-        } else {
-            $convId = $conv['conversacionId'];
-        }
-
-        // cifrar mensaje
         $mensajeCifrado = encryptMessage($mensajePlano);
 
-        // guardar mensaje
-        $mensajeId = $this->msgModel->insert([
+        $mensajeId = $this->msgModel->crearMensaje([
             'conversacionId' => $convId,
             'emisor_id' => $userId,
             'mensaje_contenido' => $mensajeCifrado,
             'tipo' => 'texto'
         ]);
 
-        // actualizar conversación
-        $this->convModel->update($convId, [
-            'ultimo_mensaje_id' => $mensajeId,
-            'actualizado_en' => date('Y-m-d H:i:s')
-        ]);
+        $this->convModel->actualizarUltimoMensaje($convId, $mensajeId);
 
         // =====================
         // RESPUESTA IA
@@ -71,7 +51,7 @@ class ChatController extends BaseController
 
         $IA_ID = 3;
 
-        if($receptorId == $IA_ID){
+        if ($receptorId == $IA_ID) {
 
             $ai = new \App\Libraries\OpenAIService();
 
@@ -79,18 +59,16 @@ class ChatController extends BaseController
 
             $respuestaCifrada = encryptMessage($respuesta);
 
-            $mensajeIA = $this->msgModel->insert([
+            $mensajeIA = $this->msgModel->crearMensaje([
                 'conversacionId' => $convId,
                 'emisor_id' => $IA_ID,
                 'mensaje_contenido' => $respuestaCifrada,
                 'tipo' => 'texto'
             ]);
 
-            $this->convModel->update($convId, [
-                'ultimo_mensaje_id' => $mensajeIA,
-                'actualizado_en' => date('Y-m-d H:i:s')
-            ]);
+            $this->convModel->actualizarUltimoMensaje($convId, $mensajeIA);
         }
+
         return $this->response->setJSON([
             'success' => true
         ]);
@@ -100,40 +78,26 @@ class ChatController extends BaseController
     {
         $userId = session()->get('usuarioId');
 
-        // ordenar usuarios igual que en send()
-        $u1 = min($userId, $receptorId);
-        $u2 = max($userId, $receptorId);
+        $conv = $this->convModel->obtenerConversacion($userId, $receptorId);
 
-        // buscar conversación
-        $conv = $this->convModel
-            ->where('usuario1_id', $u1)
-            ->where('usuario2_id', $u2)
-            ->first();
-
-        if(!$conv){
+        if (!$conv) {
             return $this->response->setJSON([
-                'mensajes'=>[]
+                'mensajes' => []
             ]);
         }
 
-        $mensajes = $this->msgModel
-            ->select('mensaje.*, archivo.ruta_archivo')
-            ->join('archivo','archivo.archivoId = mensaje.archivoId','left')
-            ->where('mensaje.conversacionId', $conv['conversacionId'])
-            ->orderBy('mensaje.fecha_enviado','ASC')
-            ->findAll();
+        $mensajes = $this->msgModel->obtenerMensajesConversacion($conv['conversacionId']);
 
-        // descifrar mensajes
-        foreach($mensajes as &$m){
+        foreach ($mensajes as &$m) {
 
-            if($m['tipo'] === 'texto'){
+            if ($m['tipo'] === 'texto') {
                 $m['mensaje_contenido'] = decryptMessage($m['mensaje_contenido']);
             }
 
         }
 
         return $this->response->setJSON([
-            'mensajes'=>$mensajes
+            'mensajes' => $mensajes
         ]);
     }
 
@@ -141,41 +105,14 @@ class ChatController extends BaseController
     {
         $userId = session()->get('usuarioId');
 
-        $db = \Config\Database::connect();
-
-        $query = $db->query("
-            SELECT 
-                u.usuarioId,
-                p.persona_Nombre,
-                p.persona_ApellidoPaterno,
-                c.conversacionId,
-                m.mensaje_contenido,
-                m.fecha_enviado
-            FROM usuario u
-            JOIN persona p 
-                ON p.personaId = u.personaId
-
-            LEFT JOIN conversacion c 
-                ON (
-                    (c.usuario1_id = u.usuarioId AND c.usuario2_id = ?)
-                    OR
-                    (c.usuario2_id = u.usuarioId AND c.usuario1_id = ?)
-                )
-
-            LEFT JOIN mensaje m 
-                ON m.mensajeId = c.ultimo_mensaje_id
-
-            WHERE u.usuarioId != ?
-
-            ORDER BY c.actualizado_en DESC, p.persona_Nombre ASC
-        ", [$userId, $userId, $userId]);
-
-        $rows = $query->getResultArray();
+        $rows = $this->convModel->obtenerConversacionesUsuario($userId);
 
         foreach ($rows as &$r) {
+
             if ($r['mensaje_contenido']) {
                 $r['mensaje_contenido'] = decryptMessage($r['mensaje_contenido']);
             }
+
         }
 
         return $this->response->setJSON([
@@ -183,78 +120,109 @@ class ChatController extends BaseController
         ]);
     }
 
-    public function sendImage()
+    public function sendFile()
     {
         $userId = session()->get('usuarioId');
 
         $receptorId = $this->request->getPost('receptor_id');
 
-        if ($receptorId == $userId) {
-            return $this->response->setJSON([
-                'success' => false,
-                'message' => 'No puedes enviarte mensajes'
-            ]);
-        }
+        $file = $this->request->getFile('archivo');
 
-        $file = $this->request->getFile('imagen');
-
-        if (!$file->isValid()) {
+        if (!$file || !$file->isValid()) {
             return $this->response->setJSON([
                 'success' => false,
                 'message' => 'Archivo inválido'
             ]);
         }
 
-        // generar nombre cifrado
-        $nombreCifrado = bin2hex(random_bytes(16)) . '.' . $file->getExtension();
+        $maxSize = 15 * 1024 * 1024;
 
-        $file->move(FCPATH . 'uploads/chat', $nombreCifrado);
-
-        // guardar archivo en BD
-        $db = \Config\Database::connect();
-
-        $db->table('archivo')->insert([
-            'nombre_original' => $file->getClientName(),
-            'nombre_cifrado' => $nombreCifrado,
-            'ruta_archivo' => 'uploads/chat/' . $nombreCifrado,
-            'mime_type' => $file->getMimeType(),
-            'tamaño_bytes' => $file->getSize()
-        ]);
-
-        $archivoId = $db->insertID();
-        // ordenar usuarios
-        $u1 = min($userId, $receptorId);
-        $u2 = max($userId, $receptorId);
-
-        $conv = $this->convModel
-            ->where('usuario1_id', $u1)
-            ->where('usuario2_id', $u2)
-            ->first();
-
-        if (!$conv) {
-
-            $convId = $this->convModel->insert([
-                'usuario1_id' => $u1,
-                'usuario2_id' => $u2,
-                'actualizado_en' => date('Y-m-d H:i:s')
+        if ($file->getSize() > $maxSize) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Archivo demasiado grande'
             ]);
-
-        } else {
-
-            $convId = $conv['conversacionId'];
-
         }
 
-        $mensajeId = $this->msgModel->insert([
+        $mime = $file->getMimeType();
+        $size = $file->getSize();
+        $nombreOriginal = $file->getClientName();
+        $extension = $file->getExtension();
+
+        $nombreCifrado = bin2hex(random_bytes(16)) . '.' . $extension;
+
+        $uploadPath = FCPATH . 'uploads/chat/';
+
+        if (!is_dir($uploadPath)) {
+            mkdir($uploadPath, 0777, true);
+        }
+
+        $file->move($uploadPath, $nombreCifrado);
+
+        $archivoId = $this->archivoModel->guardarArchivo([
+            'nombre_original' => $nombreOriginal,
+            'nombre_cifrado' => $nombreCifrado,
+            'ruta_archivo' => 'uploads/chat/' . $nombreCifrado,
+            'mime_type' => $mime,
+            'tamaño_bytes' => $size
+        ]);
+
+        $convId = $this->convModel->obtenerOCrearConversacion($userId, $receptorId);
+
+        if (str_starts_with($mime, 'image/')) {
+            $tipo = 'imagen';
+        } elseif (str_starts_with($mime, 'video/')) {
+            $tipo = 'video';
+        } elseif (str_starts_with($mime, 'audio/')) {
+            $tipo = 'audio';
+        } else {
+            $tipo = 'archivo';
+        }
+
+        $mensajeId = $this->msgModel->crearMensaje([
             'conversacionId' => $convId,
             'emisor_id' => $userId,
-            'tipo' => 'imagen',
+            'tipo' => $tipo,
             'archivoId' => $archivoId,
             'mensaje_contenido' => ''
         ]);
 
+        $this->convModel->actualizarUltimoMensaje($convId, $mensajeId);
+
         return $this->response->setJSON([
             'success' => true
+        ]);
+    }
+
+    public function subirAvatar()
+    {
+        $userId = session()->get('usuarioId');
+
+        $file = $this->request->getFile('avatar');
+
+        if (!$file || !$file->isValid()) {
+            return $this->response->setJSON([
+                'success' => false
+            ]);
+        }
+
+        $nombre = 'avatar_' . $userId . '.' . $file->getExtension();
+
+        $path = FCPATH . 'uploads/avatars/';
+
+        if (!is_dir($path)) {
+            mkdir($path, 0777, true);
+        }
+
+        $file->move($path, $nombre, true);
+
+        $this->usuarioModel->update($userId, [
+            'usuario_avatar' => 'uploads/avatars/' . $nombre
+        ]);
+
+        return $this->response->setJSON([
+            'success' => true,
+            'avatar' => 'uploads/avatars/' . $nombre
         ]);
     }
 }

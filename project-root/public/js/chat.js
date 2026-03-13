@@ -1,6 +1,7 @@
 let receptorId = null;
 let ultimoMensajeId = 0;
 const IA_ID = 3;
+let archivoPendiente = null;
 
 async function cargarConversaciones() {
   const data = await apiFetch("/chat/conversaciones");
@@ -14,8 +15,24 @@ async function cargarConversaciones() {
 
     div.className = "usuario";
 
-    const ultimo = c.mensaje_contenido ? c.mensaje_contenido : "Sin mensajes";
+    let ultimo = "Sin mensajes";
 
+    if (c.mensaje_contenido) {
+      ultimo = c.mensaje_contenido;
+    }
+    else if (c.tipo === "imagen") {
+      ultimo = "📷 Imagen";
+    }
+    else if (c.tipo === "video") {
+      ultimo = "🎥 Video";
+    }
+    else if (c.tipo === "audio") {
+      ultimo = "🎧 Audio";
+    }
+    else if (c.tipo === "archivo") {
+      ultimo = "📎 Archivo";
+    }
+    
     div.innerHTML = `
             <strong>${c.persona_Nombre} ${c.persona_ApellidoPaterno}</strong>
             <br>
@@ -91,8 +108,20 @@ function agregarMensaje(m) {
 
   if (m.tipo === "imagen") {
     contenido = `<img src="/${m.ruta_archivo}" class="chat-img">`;
+  } else if (m.tipo === "video") {
+    contenido = `<video controls class="chat-video">
+                 <source src="/${m.ruta_archivo}">
+               </video>`;
+  } else if (m.tipo === "audio") {
+    contenido = `<audio controls>
+                 <source src="/${m.ruta_archivo}">
+               </audio>`;
+  } else if (m.tipo === "archivo") {
+    const nombre = m.nombre_original ?? "archivo";
+
+    contenido = `<a href="/${m.ruta_archivo}" target="_blank">📎 ${nombre}</a>`;
   } else {
-    contenido = m.mensaje_contenido;
+    contenido = document.createTextNode(m.mensaje_contenido).textContent;
   }
 
   div.innerHTML = `
@@ -106,7 +135,10 @@ function agregarMensaje(m) {
 
   box.appendChild(div);
 
-  box.scrollTop = box.scrollHeight;
+  box.scrollTo({
+    top: box.scrollHeight,
+    behavior: "smooth",
+  });
 }
 
 async function enviar() {
@@ -140,25 +172,44 @@ async function enviar() {
   cargarConversaciones();
 }
 
-async function enviarImagen() {
-  const fileInput = document.getElementById("imagen");
-
-  if (!fileInput.files.length || !receptorId) return;
+async function subirArchivo(file) {
+  if (!file || !receptorId) return;
 
   const formData = new FormData();
 
-  formData.append("imagen", fileInput.files[0]);
+  formData.append("archivo", file);
   formData.append("receptor_id", receptorId);
 
-  await fetch("/api/chat/send-image", {
-    method: "POST",
-    body: formData,
-  });
+  const progressBox = document.getElementById("uploadProgress");
+  const bar = document.querySelector(".upload-bar");
 
-  fileInput.value = "";
+  progressBox.style.display = "block";
+  bar.style.width = "0%";
 
-  cargarConversacion();
-  cargarConversaciones();
+  const xhr = new XMLHttpRequest();
+
+  xhr.open("POST", "/api/chat/sendFile");
+
+  xhr.upload.onprogress = function (e) {
+    if (e.lengthComputable) {
+      const percent = (e.loaded / e.total) * 100;
+
+      bar.style.width = percent + "%";
+    }
+  };
+
+  xhr.onload = function () {
+    progressBox.style.display = "none";
+
+    cargarConversacion();
+    cargarConversaciones();
+  };
+  xhr.onerror = function () {
+    progressBox.style.display = "none";
+    alert("Error subiendo archivo");
+  };
+
+  xhr.send(formData);
 }
 
 document.getElementById("mensaje").addEventListener("keypress", function (e) {
@@ -167,13 +218,52 @@ document.getElementById("mensaje").addEventListener("keypress", function (e) {
   }
 });
 
-const imagenInput = document.getElementById("imagen");
+const fileInput = document.getElementById("fileInput");
+function mostrarPreview(file) {
+  const box = document.getElementById("filePreview");
+  const content = document.getElementById("previewContent");
 
-if (imagenInput) {
-  imagenInput.addEventListener("change", function () {
-    enviarImagen();
+  box.style.display = "block";
+
+  content.innerHTML = "";
+
+  if (file.type.startsWith("image/")) {
+    const img = document.createElement("img");
+
+    img.src = URL.createObjectURL(file);
+
+    content.appendChild(img);
+  } else {
+    const p = document.createElement("p");
+
+    p.innerText = "📎 " + file.name;
+
+    content.appendChild(p);
+  }
+}
+if (fileInput) {
+  fileInput.addEventListener("change", function () {
+    if (!this.files.length) return;
+
+    archivoPendiente = this.files[0];
+
+    mostrarPreview(archivoPendiente);
   });
 }
+document.getElementById("cancelPreview").onclick = function () {
+  archivoPendiente = null;
+
+  document.getElementById("filePreview").style.display = "none";
+};
+document.getElementById("sendPreview").onclick = function () {
+  if (!archivoPendiente) return;
+
+  subirArchivo(archivoPendiente);
+
+  archivoPendiente = null;
+
+  document.getElementById("filePreview").style.display = "none";
+};
 setInterval(() => {
   if (receptorId) {
     cargarConversacion();

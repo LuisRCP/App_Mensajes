@@ -17,9 +17,6 @@ class AuthController extends BaseController
         $this->usuarioModel = new UsuarioModel();
     }
 
-    /**
-     * REGISTRO
-     */
     public function register()
     {
         $data = $this->request->getJSON(true);
@@ -36,10 +33,8 @@ class AuthController extends BaseController
             ]);
         }
 
-        // verificar correo existente
-        $existente = $this->usuarioModel
-            ->where('usuario_Correo', $data['correo'])
-            ->first();
+        // verificar si el correo ya existe
+        $existente = $this->usuarioModel->obtenerPorCorreo($data['correo']);
 
         if ($existente) {
             return $this->response->setJSON([
@@ -49,10 +44,10 @@ class AuthController extends BaseController
         }
 
         // crear persona
-        $personaId = $this->personaModel->insert([
+        $personaId = $this->personaModel->crearPersona([
             'persona_Nombre' => $data['nombre'],
             'persona_ApellidoPaterno' => $data['apellido_paterno'],
-            'persona_ApellidoMaterno' => $data['apellido_materno'],
+            'persona_ApellidoMaterno' => $data['apellido_materno']
         ]);
 
         // generar contraseña automática
@@ -64,7 +59,7 @@ class AuthController extends BaseController
         );
 
         // crear usuario
-        $this->usuarioModel->insert([
+        $this->usuarioModel->crearUsuario([
             'usuario_Correo' => $data['correo'],
             'usuario_Clave' => $passwordHash,
             'personaId' => $personaId
@@ -91,9 +86,6 @@ class AuthController extends BaseController
         ]);
     }
 
-    /**
-     * LOGIN
-     */
     public function login()
     {
         $data = $this->request->getJSON(true);
@@ -105,22 +97,18 @@ class AuthController extends BaseController
             ]);
         }
 
-        $usuario = $this->usuarioModel
-            ->where('usuario_Correo', $data['correo'])
-            ->first();
+        $usuario = $this->usuarioModel->validarLogin(
+            $data['correo'],
+            $data['password']
+        );
 
         if (!$usuario) {
-            return $this->response->setStatusCode(401)->setJSON([
-                'success' => false,
-                'message' => 'Credenciales incorrectas'
-            ]);
-        }
-
-        if (!password_verify($data['password'], $usuario['usuario_Clave'])) {
-            return $this->response->setStatusCode(401)->setJSON([
-                'success' => false,
-                'message' => 'Credenciales incorrectas'
-            ]);
+            return $this->response
+                ->setStatusCode(401)
+                ->setJSON([
+                    'success' => false,
+                    'message' => 'Credenciales incorrectas'
+                ]);
         }
 
         // crear sesión
@@ -136,9 +124,6 @@ class AuthController extends BaseController
         ]);
     }
 
-    /**
-     * LOGOUT
-     */
     public function logout()
     {
         session()->destroy();
@@ -152,14 +137,15 @@ class AuthController extends BaseController
     {
         $userId = session()->get('usuarioId');
 
-        $usuarios = $this->usuarioModel
-            ->select('usuario.usuarioId, persona.persona_Nombre, persona.persona_ApellidoPaterno')
-            ->join('persona', 'persona.personaId = usuario.personaId')
-            ->where('usuario.usuarioId !=', $userId)
-            ->findAll();
+        $usuarios = $this->usuarioModel->listarUsuarios();
+
+        // excluir usuario actual
+        $usuarios = array_filter($usuarios, function ($u) use ($userId) {
+            return $u['usuarioId'] != $userId;
+        });
 
         return $this->response->setJSON([
-            'usuarios' => $usuarios
+            'usuarios' => array_values($usuarios)
         ]);
     }
 }
