@@ -6,12 +6,14 @@ use App\Controllers\BaseController;
 use App\Models\ConversacionModel;
 use App\Models\MensajeModel;
 use App\Models\ArchivoModel;
+use App\Models\UsuarioModel;
 
 class ChatController extends BaseController
 {
     protected $convModel;
     protected $msgModel;
     protected $archivoModel;
+    protected $usuarioModel;
 
     public function __construct()
     {
@@ -20,6 +22,7 @@ class ChatController extends BaseController
         $this->convModel = new ConversacionModel();
         $this->msgModel  = new MensajeModel();
         $this->archivoModel = new ArchivoModel();
+        $this->usuarioModel = new UsuarioModel();
     }
 
 
@@ -202,7 +205,17 @@ class ChatController extends BaseController
 
         if (!$file || !$file->isValid()) {
             return $this->response->setJSON([
-                'success' => false
+                'success' => false,
+                'message' => 'Archivo inválido'
+            ]);
+        }
+
+        $mime = $file->getMimeType();
+
+        if (!str_starts_with($mime, 'image/')) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Solo se permiten imágenes'
             ]);
         }
 
@@ -216,13 +229,13 @@ class ChatController extends BaseController
 
         $file->move($path, $nombre, true);
 
-        $this->usuarioModel->update($userId, [
-            'usuario_avatar' => 'uploads/avatars/' . $nombre
-        ]);
+        $ruta = 'uploads/avatars/' . $nombre;
+
+        $this->usuarioModel->actualizarAvatar($userId, $ruta);
 
         return $this->response->setJSON([
             'success' => true,
-            'avatar' => 'uploads/avatars/' . $nombre
+            'avatar' => $ruta
         ]);
     }
 }

@@ -17,7 +17,8 @@ class UsuarioModel extends Model
     protected $allowedFields = [
         'usuario_Correo',
         'usuario_Clave',
-        'personaId'
+        'personaId',
+        'usuario_avatar'
     ];
 
     protected $useTimestamps = false;
@@ -35,10 +36,16 @@ class UsuarioModel extends Model
 
     public function obtenerUsuarioConPersona($usuarioId)
     {
-        return $this->select('usuario.*, persona.persona_Nombre, persona.persona_ApellidoPaterno, persona.persona_ApellidoMaterno')
-            ->join('persona', 'persona.personaId = usuario.personaId')
-            ->where('usuario.usuarioId', $usuarioId)
-            ->first();
+        return $this->select('
+            usuario.*,
+            usuario.usuario_avatar,
+            persona.persona_Nombre,
+            persona.persona_ApellidoPaterno,
+            persona.persona_ApellidoMaterno
+        ')
+        ->join('persona', 'persona.personaId = usuario.personaId')
+        ->where('usuario.usuarioId', $usuarioId)
+        ->first();
     }
 
     public function validarLogin($correo, $password)
@@ -58,9 +65,22 @@ class UsuarioModel extends Model
 
     public function listarUsuarios()
     {
-        return $this->select('usuario.usuarioId, persona.persona_Nombre, persona.persona_ApellidoPaterno, persona.persona_ApellidoMaterno')
-            ->join('persona', 'persona.personaId = usuario.personaId')
-            ->orderBy('persona.persona_Nombre', 'ASC')
-            ->findAll();
+        return $this->select('
+            usuario.usuarioId,
+            usuario.usuario_avatar,
+            persona.persona_Nombre,
+            persona.persona_ApellidoPaterno,
+            persona.persona_ApellidoMaterno
+        ')
+        ->join('persona', 'persona.personaId = usuario.personaId')
+        ->orderBy('persona.persona_Nombre', 'ASC')
+        ->findAll();
+    }
+    
+    public function actualizarAvatar($usuarioId, $ruta)
+    {
+        return $this->update($usuarioId, [
+            'usuario_avatar' => $ruta
+        ]);
     }
 }

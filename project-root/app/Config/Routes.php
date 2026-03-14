@@ -28,6 +28,8 @@ $routes->group('api', ['filter'=>'auth'], function($routes){
 
     $routes->post('chat/sendFile', 'API\ChatController::sendFile');
 
+    $routes->post('chat/avatar', 'API\ChatController::subirAvatar');
+
 });
 
 // páginas MVC
