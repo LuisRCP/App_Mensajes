@@ -28,7 +28,7 @@ if (chatInput) {
 }
 
 let typingTimer;
-const inputMensajeUI = document.getElementById("mensaje");
+
 if (mensajeInput) {
   mensajeInput.addEventListener("input", () => {
     const typing = document.getElementById("typing");

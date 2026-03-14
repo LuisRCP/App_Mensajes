@@ -2,6 +2,7 @@ let receptorId = null;
 let ultimoMensajeId = 0;
 const IA_ID = 3;
 let archivoPendiente = null;
+const MI_AVATAR = document.getElementById("myAvatar")?.src || "/img/default-avatar.jpg";
 
 async function cargarConversaciones() {
   const data = await apiFetch("/chat/conversaciones");
@@ -115,13 +116,11 @@ async function cargarConversacion() {
 }
 
 function agregarMensaje(m) {
+
   const div = document.createElement("div");
+  div.classList.add("msg-row");
 
-  div.classList.add("msg");
-
-  if (m.emisor_id == usuarioId) {
-    div.classList.add("me");
-  }
+  const esMio = m.emisor_id == usuarioId;
 
   const fecha = new Date(m.fecha_enviado);
 
@@ -133,32 +132,54 @@ function agregarMensaje(m) {
   let contenido = "";
 
   if (m.tipo === "imagen") {
+
     contenido = `<img src="/${m.ruta_archivo}" class="chat-img">`;
+
   } else if (m.tipo === "video") {
+
     contenido = `
       <video controls class="chat-video">
         <source src="/${m.ruta_archivo}">
       </video>
     `;
+
   } else if (m.tipo === "audio") {
+
     contenido = `
       <audio controls>
         <source src="/${m.ruta_archivo}">
       </audio>
     `;
+
   } else if (m.tipo === "archivo") {
+
     const nombre = m.nombre_original ?? "archivo";
 
     contenido = `<a href="/${m.ruta_archivo}" target="_blank">📎 ${nombre}</a>`;
+
   } else {
+
     contenido = document.createTextNode(m.mensaje_contenido).textContent;
+
   }
 
+  const avatar = esMio
+    ? MI_AVATAR
+    : (m.usuario_avatar ? "/" + m.usuario_avatar : "/img/default-avatar.jpg");
+
   div.innerHTML = `
-    <span>
-      ${contenido}
-      <div class="msg-time">${hora}</div>
-    </span>
+  
+    ${!esMio ? `<img class="msg-avatar" src="${avatar}">` : ""}
+
+    <div class="msg ${esMio ? "me" : ""}">
+      <span>
+        ${contenido}
+        <div class="msg-time">${hora}</div>
+      </span>
+    </div>
+
+    ${esMio ? `<img class="msg-avatar" src="${avatar}">` : ""}
+
   `;
 
   const box = document.getElementById("messages");
@@ -169,8 +190,9 @@ function agregarMensaje(m) {
 
   box.scrollTo({
     top: box.scrollHeight,
-    behavior: "smooth",
+    behavior: "smooth"
   });
+
 }
 
 async function enviar() {
@@ -347,7 +369,7 @@ if (avatarInput) {
     const formData = new FormData();
     formData.append("avatar", file);
 
-    const res = await fetch("/api/chat/subirAvatar",{
+    const res = await fetch("/api/chat/avatar",{
       method:"POST",
       body:formData
     });

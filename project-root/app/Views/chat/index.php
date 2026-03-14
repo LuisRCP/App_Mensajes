@@ -71,7 +71,7 @@
 
                 <div class="profile-area">
 
-                    <img id="myAvatar" src="/img/default-avatar.png" class="avatar-header profile-avatar">
+                    <img id="myAvatar" src="/img/default-avatar.jpg" class="avatar-header profile-avatar">
 
                     <input type="file" id="avatarInput" accept="image/*" capture="environment" hidden>
 
