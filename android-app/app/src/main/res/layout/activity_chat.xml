@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<androidx.drawerlayout.widget.DrawerLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/drawerLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- CONTENIDO PRINCIPAL -->
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <!-- TOOLBAR -->
+
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:background="@color/purple_500"
+            android:title="Chat"
+            android:titleTextColor="@android:color/white"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+        <!-- AREA DEL CHAT -->
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:padding="12dp"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <!-- MENSAJES -->
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerMensajes"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:padding="8dp"
+                android:clipToPadding="false"/>
+
+            <!-- INPUT MENSAJE -->
+
+            <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingTop="6dp">
+
+                <EditText
+                    android:id="@+id/inputMensaje"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:hint="Escribe un mensaje"
+                    android:background="@android:drawable/edit_text"
+                    android:padding="10dp"/>
+
+                <Button
+                    android:id="@+id/btnEnviar"
+                    android:text="Enviar"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"/>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+
+    <!-- ========================= -->
+    <!-- MENU LATERAL (USUARIOS) -->
+    <!-- ========================= -->
+
+    <LinearLayout
+        android:layout_width="280dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        android:orientation="vertical"
+        android:background="#FFFFFF">
+
+        <!-- TITULO MENU -->
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Usuarios"
+            android:textStyle="bold"
+            android:textSize="18sp"
+            android:padding="16dp"
+            android:background="@color/purple_500"
+            android:textColor="@android:color/white"/>
+
+        <!-- LISTA DE USUARIOS -->
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerUsuarios"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+
+    </LinearLayout>
+
+
+</androidx.drawerlayout.widget.DrawerLayout>
